@@ -1,7 +1,14 @@
-package sso
+package main
+
+import (
+	"fmt"
+
+	"github.com/carbon77/sso/internal/config"
+)
 
 func main() {
-	// TODO: init config object
+	config := config.MustLoad()
+	fmt.Println(config)
 
 	// TODO: init logger
 
