@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/carbon77/sso/internal/app"
 	"github.com/carbon77/sso/internal/config"
 )
 
@@ -21,9 +22,11 @@ func main() {
 		slog.String("env", config.Env),
 	)
 
-	// TODO: init app
+	application := app.New(
+		log, config.GRPC.Port, config.StoragePath, config.TokenTTL,
+	)
 
-	// TODO: start grpc-server
+	application.GRPCServer.MustRun()
 }
 
 func setupLogger(env string) *slog.Logger {
