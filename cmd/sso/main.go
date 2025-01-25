@@ -3,6 +3,8 @@ package main
 import (
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/carbon77/sso/internal/app"
 	"github.com/carbon77/sso/internal/config"
@@ -26,7 +28,20 @@ func main() {
 		log, config.GRPC.Port, config.StoragePath, config.TokenTTL,
 	)
 
-	application.GRPCServer.MustRun()
+	go application.GRPCServer.MustRun()
+
+	// Graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
+
+	sign := <-stop
+	log.Info(
+		"stopping application",
+		slog.String("signal", sign.String()),
+	)
+
+	application.GRPCServer.Stop()
+	log.Info("application stopped")
 }
 
 func setupLogger(env string) *slog.Logger {
