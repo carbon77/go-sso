@@ -10,7 +10,6 @@ import (
 	"github.com/carbon77/sso/internal/domain/models"
 	"github.com/carbon77/sso/internal/lib/jwt"
 	"github.com/carbon77/sso/internal/lib/sl"
-	"github.com/carbon77/sso/internal/sl"
 	"github.com/carbon77/sso/internal/storage"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -137,7 +136,13 @@ func (a *Auth) RegisterNewUser(
 
 	id, err := a.userRepo.SaveUser(ctx, email, passHash)
 	if err != nil {
+		if errors.Is(err, storage.ErrUserExists) {
+			log.Warn("user already exists", sl.Err(err))
+			return 0, fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
+		}
+
 		log.Error("failed to generate password hash", sl.Err(err))
+		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
 	log.Info("user registered")
@@ -160,6 +165,10 @@ func (a *Auth) IsAdmin(
 
 	isAdmin, err := a.userProvider.IsAdmin(ctx, userID)
 	if err != nil {
+		if errors.Is(err, storage.ErrAppNotFound) {
+			log.Warn("app not found", sl.Err(err))
+			return false, fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
+		}
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
 
